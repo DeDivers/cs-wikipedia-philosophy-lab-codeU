@@ -33,19 +33,58 @@ public class WikiPhilosophy {
 
 		String url = "https://en.wikipedia.org/wiki/Java_(programming_language)";
 		Elements paragraphs = wf.fetchWikipedia(url);
-
+		String baseUrl = "https://en.wikipedia.org";
+		String location = "";
+		List<String> visited = new ArrayList<>();
 		Element firstPara = paragraphs.get(0);
-		
+		boolean notFound = true;
+		boolean first = false;
+		int i = 0;
 		Iterable<Node> iter = new WikiNodeIterable(firstPara);
-		for (Node node: iter) {
-			if (node instanceof TextNode) {
-				System.out.print(node);
+		visited.add(url);
+		while (notFound && i < 7) {
+			for (Node node: iter) {
+				if (node instanceof Element) {
+					Element e2 = (Element) node;
+					String e2txt = e2.text();
+					Elements e = e2.children();
+					for (Node n : e) {
+						if (n instanceof Element) {
+							Element e3 = (Element) n;
+							if (!first) {
+								if (e3.tag().toString().equals("a")) {
+									if (e2txt.indexOf("(") < e2txt.indexOf(e3.text()) && e2txt.indexOf(")") > e2txt.indexOf(e3.text())) {
+
+									} else {
+										first = true;
+										String str = e3.toString();
+										String[] arr = str.split(" ");
+										location = arr[1].substring(6, arr[1].length() - 1);
+									}
+								}
+							}
+						}
+					}
+					if (!first) {
+						System.out.println("No links found, exiting.");
+						return;
+					}
+				}
+			}
+			paragraphs = wf.fetchWikipedia(baseUrl + location);
+			iter = new WikiNodeIterable(paragraphs.get(0));
+			first = false;
+			if (visited.contains(baseUrl + location)) {
+				System.out.println("Links go in a loop, exiting");
+				return;
+			}
+			visited.add(baseUrl + location);
+			i++;
+			if (location.substring(6).equals("Philosophy")) {
+				notFound = false;
+				System.out.println("Philosophy found in " + i + " jumps");
 			}
         }
-
-        // the following throws an exception so the test fails
-        // until you update the code
-        String msg = "Complete this lab by adding your code and removing this statement.";
-        throw new UnsupportedOperationException(msg);
+        System.out.println(visited);
 	}
 }
